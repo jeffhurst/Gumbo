@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import asyncio
+
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
 
 from telegram_llm_bot.bot.handlers import BotHandlers
@@ -30,5 +32,10 @@ def run() -> None:
     application.add_handler(
         MessageHandler(filters.TEXT & ~filters.COMMAND, handlers.handle_text)
     )
+
+    try:
+        asyncio.get_event_loop()
+    except RuntimeError:
+        asyncio.set_event_loop(asyncio.new_event_loop())
 
     application.run_polling(close_loop=False)

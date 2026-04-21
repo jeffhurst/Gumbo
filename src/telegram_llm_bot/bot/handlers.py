@@ -6,7 +6,11 @@ from telegram import Update
 from telegram.constants import ChatAction
 from telegram.ext import ContextTypes
 
-from telegram_llm_bot.llm.client import LLMClient
+from telegram_llm_bot.llm.client import (
+    LLMClient,
+    LLMClientConnectionError,
+    LLMClientTimeoutError,
+)
 from telegram_llm_bot.state.history import ChatHistoryStore
 from telegram_llm_bot.utils.text import chunk_text
 
@@ -63,8 +67,18 @@ class BotHandlers:
             self._history_store.append_assistant(chat_id, model_reply)
             for chunk in chunk_text(model_reply):
                 await update.message.reply_text(chunk)
+        except LLMClientTimeoutError:
+            logger.warning("LLM request timed out")
+            await update.message.reply_text(
+                "The LLM service timed out. Please check that it is running and try again."
+            )
+        except LLMClientConnectionError:
+            logger.warning("Could not connect to LLM service")
+            await update.message.reply_text(
+                "I couldn't reach the LLM service. Verify OLLAMA_BASE_URL and that the server is up."
+            )
         except Exception:  # noqa: BLE001
             logger.exception("Error generating LLM response")
             await update.message.reply_text(
-                "Sorry, I hit an error while processing your message."
+                "Sorry, I hit an unexpected error while processing your message."
             )
