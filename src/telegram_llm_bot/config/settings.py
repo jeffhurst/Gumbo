@@ -1,0 +1,72 @@
+from __future__ import annotations
+
+import os
+from dataclasses import dataclass
+
+from dotenv import load_dotenv
+
+
+@dataclass(frozen=True)
+class Settings:
+    telegram_bot_token: str
+    openai_api_key: str
+    openai_model: str
+    system_prompt: str
+    log_level: str
+    max_history_messages: int
+    temperature: float
+
+
+class SettingsError(ValueError):
+    """Raised when environment configuration is invalid."""
+
+
+def _required_env(name: str) -> str:
+    value = os.getenv(name)
+    if not value:
+        raise SettingsError(f"Missing required environment variable: {name}")
+    return value
+
+
+def _positive_int_env(name: str, default: int) -> int:
+    raw_value = os.getenv(name)
+    if raw_value is None:
+        return default
+
+    try:
+        value = int(raw_value)
+    except ValueError as exc:
+        raise SettingsError(f"{name} must be an integer") from exc
+
+    if value <= 0:
+        raise SettingsError(f"{name} must be > 0")
+    return value
+
+
+def _bounded_float_env(name: str, default: float, min_value: float, max_value: float) -> float:
+    raw_value = os.getenv(name)
+    if raw_value is None:
+        return default
+
+    try:
+        value = float(raw_value)
+    except ValueError as exc:
+        raise SettingsError(f"{name} must be a number") from exc
+
+    if not min_value <= value <= max_value:
+        raise SettingsError(f"{name} must be between {min_value} and {max_value}")
+    return value
+
+
+def load_settings() -> Settings:
+    load_dotenv()
+
+    return Settings(
+        telegram_bot_token=_required_env("TELEGRAM_BOT_TOKEN"),
+        openai_api_key=_required_env("OPENAI_API_KEY"),
+        openai_model=os.getenv("OPENAI_MODEL", "gpt-4.1-mini"),
+        system_prompt=os.getenv("SYSTEM_PROMPT", "You are a helpful assistant."),
+        log_level=os.getenv("BOT_LOG_LEVEL", "INFO").upper(),
+        max_history_messages=_positive_int_env("MAX_HISTORY_MESSAGES", 12),
+        temperature=_bounded_float_env("OPENAI_TEMPERATURE", 0.4, 0.0, 2.0),
+    )

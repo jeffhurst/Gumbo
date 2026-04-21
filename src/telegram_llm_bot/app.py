@@ -1,0 +1,33 @@
+from __future__ import annotations
+
+from telegram.ext import Application, CommandHandler, MessageHandler, filters
+
+from telegram_llm_bot.bot.handlers import BotHandlers
+from telegram_llm_bot.config.settings import load_settings
+from telegram_llm_bot.llm.client import LLMClient
+from telegram_llm_bot.state.history import ChatHistoryStore
+from telegram_llm_bot.utils.logging import configure_logging
+
+
+def run() -> None:
+    settings = load_settings()
+    configure_logging(settings.log_level)
+
+    llm_client = LLMClient(
+        api_key=settings.openai_api_key,
+        model=settings.openai_model,
+        system_prompt=settings.system_prompt,
+        temperature=settings.temperature,
+    )
+    history_store = ChatHistoryStore(max_messages=settings.max_history_messages)
+    handlers = BotHandlers(llm_client, history_store)
+
+    application = Application.builder().token(settings.telegram_bot_token).build()
+    application.add_handler(CommandHandler("start", handlers.start))
+    application.add_handler(CommandHandler("help", handlers.help))
+    application.add_handler(CommandHandler("reset", handlers.reset))
+    application.add_handler(
+        MessageHandler(filters.TEXT & ~filters.COMMAND, handlers.handle_text)
+    )
+
+    application.run_polling(close_loop=False)
