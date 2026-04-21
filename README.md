@@ -44,7 +44,6 @@ Required values:
 
 Optional values:
 - `OLLAMA_BASE_URL` (default: `http://localhost:11434`)
-- `OLLAMA_API_KEY` (default: `ollama`; can be any non-empty value for local Ollama)
 - `OLLAMA_MODEL` (default: `llama3.2`)
 - `OLLAMA_TEMPERATURE` (default: `0.4`, range: `0.0` to `2.0`)
 - `SYSTEM_PROMPT` (default: helpful general assistant)

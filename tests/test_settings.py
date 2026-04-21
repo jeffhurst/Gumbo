@@ -15,7 +15,6 @@ class TestSettings(unittest.TestCase):
     def test_load_settings_defaults(self) -> None:
         os.environ["TELEGRAM_BOT_TOKEN"] = "token"
         os.environ.pop("OLLAMA_BASE_URL", None)
-        os.environ.pop("OLLAMA_API_KEY", None)
         os.environ.pop("OLLAMA_MODEL", None)
         os.environ.pop("OLLAMA_TEMPERATURE", None)
         os.environ.pop("MAX_HISTORY_MESSAGES", None)
@@ -23,7 +22,6 @@ class TestSettings(unittest.TestCase):
         settings = load_settings()
 
         self.assertEqual(settings.ollama_base_url, "http://localhost:11434")
-        self.assertEqual(settings.ollama_api_key, "ollama")
         self.assertEqual(settings.ollama_model, "llama3.2")
         self.assertEqual(settings.temperature, 0.4)
         self.assertEqual(settings.max_history_messages, 12)

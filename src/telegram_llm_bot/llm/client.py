@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from openai import APIConnectionError, APITimeoutError, AsyncOpenAI
+import httpx
 
 
 class LLMClientError(RuntimeError):
@@ -19,30 +19,42 @@ class LLMClientConnectionError(LLMClientError):
 
 class LLMClient:
     def __init__(
-        self, base_url: str, api_key: str, model: str, system_prompt: str, temperature: float
+        self,
+        base_url: str,
+        model: str,
+        system_prompt: str,
+        temperature: float,
+        timeout_seconds: float = 60.0,
     ) -> None:
         normalized_base_url = base_url.rstrip("/")
-        self._client = AsyncOpenAI(api_key=api_key, base_url=f"{normalized_base_url}/v1")
+        self._chat_url = f"{normalized_base_url}/api/chat"
         self._model = model
         self._system_prompt = system_prompt
         self._temperature = temperature
+        self._timeout = timeout_seconds
 
     async def generate_reply(self, user_message: str, chat_history: Sequence[dict[str, str]]) -> str:
         messages = [{"role": "system", "content": self._system_prompt}, *chat_history]
         messages.append({"role": "user", "content": user_message})
 
+        payload = {
+            "model": self._model,
+            "messages": messages,
+            "stream": False,
+            "options": {"temperature": self._temperature},
+        }
+
         try:
-            response = await self._client.chat.completions.create(
-                model=self._model,
-                temperature=self._temperature,
-                messages=messages,
-            )
-        except APITimeoutError as exc:
+            async with httpx.AsyncClient(timeout=self._timeout) as client:
+                response = await client.post(self._chat_url, json=payload)
+                response.raise_for_status()
+        except httpx.TimeoutException as exc:
             raise LLMClientTimeoutError("Timed out waiting for the LLM service") from exc
-        except APIConnectionError as exc:
+        except httpx.ConnectError as exc:
+            raise LLMClientConnectionError("Could not connect to the LLM service") from exc
+        except httpx.RequestError as exc:
             raise LLMClientConnectionError("Could not connect to the LLM service") from exc
 
-        content = response.choices[0].message.content
-        if isinstance(content, list):
-            content = "".join(part.text for part in content if getattr(part, "type", None) == "text")
+        data = response.json()
+        content = data.get("message", {}).get("content", "")
         return (content or "").strip() or "I could not generate a response."
