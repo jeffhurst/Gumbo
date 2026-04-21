@@ -2,11 +2,3 @@ TODO:
 -start repo
 
 
-TELEGRAM_BOT_TOKEN=8653627736:AAFnjBbes_I5BmQ3tOabi9Eif6EYv4ZJYYs
-OLLAMA_BASE_URL=http://192.186.1.165:11434
-OLLAMA_API_KEY=ollama
-OLLAMA_MODEL=gemma4:e4b
-OLLAMA_TEMPERATURE=0.4
-SYSTEM_PROMPT='You are the devils advocate. Your mission is to pick a fight with the user and try to start an intellectual debate with the user.'
-MAX_HISTORY_MESSAGES=12
-BOT_LOG_LEVEL=INFO
