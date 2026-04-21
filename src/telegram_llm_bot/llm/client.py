@@ -2,7 +2,19 @@ from __future__ import annotations
 
 from collections.abc import Sequence
 
-from openai import AsyncOpenAI
+from openai import APIConnectionError, APITimeoutError, AsyncOpenAI
+
+
+class LLMClientError(RuntimeError):
+    """Base class for recoverable LLM client failures."""
+
+
+class LLMClientTimeoutError(LLMClientError):
+    """Raised when the LLM request times out."""
+
+
+class LLMClientConnectionError(LLMClientError):
+    """Raised when the LLM service cannot be reached."""
 
 
 class LLMClient:
@@ -19,11 +31,17 @@ class LLMClient:
         messages = [{"role": "system", "content": self._system_prompt}, *chat_history]
         messages.append({"role": "user", "content": user_message})
 
-        response = await self._client.chat.completions.create(
-            model=self._model,
-            temperature=self._temperature,
-            messages=messages,
-        )
+        try:
+            response = await self._client.chat.completions.create(
+                model=self._model,
+                temperature=self._temperature,
+                messages=messages,
+            )
+        except APITimeoutError as exc:
+            raise LLMClientTimeoutError("Timed out waiting for the LLM service") from exc
+        except APIConnectionError as exc:
+            raise LLMClientConnectionError("Could not connect to the LLM service") from exc
+
         content = response.choices[0].message.content
         if isinstance(content, list):
             content = "".join(part.text for part in content if getattr(part, "type", None) == "text")
