@@ -14,8 +14,9 @@ def run() -> None:
     configure_logging(settings.log_level)
 
     llm_client = LLMClient(
-        api_key=settings.openai_api_key,
-        model=settings.openai_model,
+        base_url=settings.ollama_base_url,
+        api_key=settings.ollama_api_key,
+        model=settings.ollama_model,
         system_prompt=settings.system_prompt,
         temperature=settings.temperature,
     )

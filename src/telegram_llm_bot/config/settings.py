@@ -9,8 +9,9 @@ from dotenv import load_dotenv
 @dataclass(frozen=True)
 class Settings:
     telegram_bot_token: str
-    openai_api_key: str
-    openai_model: str
+    ollama_base_url: str
+    ollama_api_key: str
+    ollama_model: str
     system_prompt: str
     log_level: str
     max_history_messages: int
@@ -63,10 +64,11 @@ def load_settings() -> Settings:
 
     return Settings(
         telegram_bot_token=_required_env("TELEGRAM_BOT_TOKEN"),
-        openai_api_key=_required_env("OPENAI_API_KEY"),
-        openai_model=os.getenv("OPENAI_MODEL", "gpt-4.1-mini"),
+        ollama_base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
+        ollama_api_key=os.getenv("OLLAMA_API_KEY", "ollama"),
+        ollama_model=os.getenv("OLLAMA_MODEL", "llama3.2"),
         system_prompt=os.getenv("SYSTEM_PROMPT", "You are a helpful assistant."),
         log_level=os.getenv("BOT_LOG_LEVEL", "INFO").upper(),
         max_history_messages=_positive_int_env("MAX_HISTORY_MESSAGES", 12),
-        temperature=_bounded_float_env("OPENAI_TEMPERATURE", 0.4, 0.0, 2.0),
+        temperature=_bounded_float_env("OLLAMA_TEMPERATURE", 0.4, 0.0, 2.0),
     )
