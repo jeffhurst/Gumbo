@@ -27,6 +27,21 @@ class TestBotHandlers(unittest.IsolatedAsyncioTestCase):
         history_store.append_assistant.assert_called_once_with(42, "Hello from model!")
         message.reply_text.assert_awaited_once_with("Hello from model!")
 
+    async def test_send_boot_greeting_to_chat_uses_callback(self) -> None:
+        llm_client = Mock()
+        llm_client.generate_reply = AsyncMock(return_value="Welcome!")
+        history_store = Mock()
+        history_store.get.return_value = []
+        send_text = AsyncMock()
+
+        handlers = BotHandlers(llm_client, history_store)
+        await handlers.send_boot_greeting_to_chat(chat_id=77, send_text=send_text)
+
+        llm_client.generate_reply.assert_awaited_once_with("Greet the User.", [])
+        history_store.append_user.assert_called_once_with(77, "Greet the User.")
+        history_store.append_assistant.assert_called_once_with(77, "Welcome!")
+        send_text.assert_awaited_once_with("Welcome!")
+
 
 if __name__ == "__main__":
     unittest.main()

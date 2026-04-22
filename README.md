@@ -49,6 +49,7 @@ Optional values:
 - `SYSTEM_PROMPT` (default: helpful general assistant)
 - `MAX_HISTORY_MESSAGES` (default: `12`)
 - `BOT_LOG_LEVEL` (default: `INFO`)
+- `TELEGRAM_BOOT_CHAT_ID` (optional: chat id to auto-send an LLM greeting when the bot process boots)
 
 ## 3) Run
 

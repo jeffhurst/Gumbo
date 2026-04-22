@@ -1,14 +1,18 @@
 from __future__ import annotations
 
 import asyncio
+import logging
 
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
+from telegram.constants import ChatAction
 
 from telegram_llm_bot.bot.handlers import BotHandlers
 from telegram_llm_bot.config.settings import load_settings
 from telegram_llm_bot.llm.client import LLMClient
 from telegram_llm_bot.state.history import ChatHistoryStore
 from telegram_llm_bot.utils.logging import configure_logging
+
+logger = logging.getLogger(__name__)
 
 
 def run() -> None:
@@ -24,7 +28,28 @@ def run() -> None:
     history_store = ChatHistoryStore(max_messages=settings.max_history_messages)
     handlers = BotHandlers(llm_client, history_store)
 
-    application = Application.builder().token(settings.telegram_bot_token).build()
+    async def on_startup(application: Application) -> None:
+        if settings.telegram_boot_chat_id is None:
+            logger.info(
+                "Skipping automatic boot greeting because TELEGRAM_BOOT_CHAT_ID is not set."
+            )
+            return
+
+        await application.bot.send_chat_action(
+            chat_id=settings.telegram_boot_chat_id,
+            action=ChatAction.TYPING,
+        )
+        await handlers.send_boot_greeting_to_chat(
+            chat_id=settings.telegram_boot_chat_id,
+            send_text=lambda text: application.bot.send_message(
+                chat_id=settings.telegram_boot_chat_id,
+                text=text,
+            ),
+        )
+
+    application = (
+        Application.builder().token(settings.telegram_bot_token).post_init(on_startup).build()
+    )
     application.add_handler(CommandHandler("start", handlers.start))
     application.add_handler(CommandHandler("help", handlers.help))
     application.add_handler(CommandHandler("reset", handlers.reset))

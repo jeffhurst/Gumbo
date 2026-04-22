@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from collections.abc import Awaitable, Callable
 
 from telegram import Update
 from telegram.constants import ChatAction
@@ -28,29 +29,44 @@ class BotHandlers:
         del context
         if update.message is None:
             return
-        chat_id = update.message.chat_id
-        history = self._history_store.get(chat_id)
         await update.message.chat.send_action(ChatAction.TYPING)
+        await self._send_boot_greeting(
+            chat_id=update.message.chat_id,
+            send_text=update.message.reply_text,
+        )
 
+    async def send_boot_greeting_to_chat(
+        self,
+        chat_id: int,
+        send_text: Callable[[str], Awaitable[object]],
+    ) -> None:
+        await self._send_boot_greeting(chat_id=chat_id, send_text=send_text)
+
+    async def _send_boot_greeting(
+        self,
+        chat_id: int,
+        send_text: Callable[[str], Awaitable[object]],
+    ) -> None:
+        history = self._history_store.get(chat_id)
         try:
             model_reply = await self._llm_client.generate_reply(self._BOOT_PROMPT, history)
             self._history_store.append_user(chat_id, self._BOOT_PROMPT)
             self._history_store.append_assistant(chat_id, model_reply)
             for chunk in chunk_text(model_reply):
-                await update.message.reply_text(chunk)
+                await send_text(chunk)
         except LLMClientTimeoutError:
             logger.warning("LLM request timed out during startup greeting")
-            await update.message.reply_text(
+            await send_text(
                 "The LLM service timed out. Please check that it is running and try again."
             )
         except LLMClientConnectionError:
             logger.warning("Could not connect to LLM service during startup greeting")
-            await update.message.reply_text(
+            await send_text(
                 "I couldn't reach the LLM service. Verify OLLAMA_BASE_URL and that the server is up."
             )
         except Exception:  # noqa: BLE001
             logger.exception("Error generating startup greeting")
-            await update.message.reply_text(
+            await send_text(
                 "Sorry, I hit an unexpected error while generating the greeting."
             )
 
