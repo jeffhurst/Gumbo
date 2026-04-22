@@ -1,4 +1,4 @@
-from telegram_llm_bot.app import run
+from gumbo.app import run
 
 
 def main() -> None:

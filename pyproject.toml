@@ -15,7 +15,7 @@ dependencies = [
 ]
 
 [project.scripts]
-gumbo = "telegram_llm_bot.main:main"
+gumbo = "gumbo.main:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

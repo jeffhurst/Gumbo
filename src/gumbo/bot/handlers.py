@@ -7,13 +7,13 @@ from telegram import Update
 from telegram.constants import ChatAction
 from telegram.ext import ContextTypes
 
-from telegram_llm_bot.llm.client import (
+from gumbo.llm.client import (
     LLMClient,
     LLMClientConnectionError,
     LLMClientTimeoutError,
 )
-from telegram_llm_bot.state.history import ChatHistoryStore
-from telegram_llm_bot.utils.text import chunk_text
+from gumbo.state.history import ChatHistoryStore
+from gumbo.utils.text import chunk_text
 
 logger = logging.getLogger(__name__)
 

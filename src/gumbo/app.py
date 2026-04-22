@@ -6,11 +6,11 @@ import logging
 from telegram.ext import Application, CommandHandler, MessageHandler, filters
 from telegram.constants import ChatAction
 
-from telegram_llm_bot.bot.handlers import BotHandlers
-from telegram_llm_bot.config.settings import load_settings
-from telegram_llm_bot.llm.client import LLMClient
-from telegram_llm_bot.state.history import ChatHistoryStore
-from telegram_llm_bot.utils.logging import configure_logging
+from gumbo.bot.handlers import BotHandlers
+from gumbo.config.settings import load_settings
+from gumbo.llm.client import LLMClient
+from gumbo.state.history import ChatHistoryStore
+from gumbo.utils.logging import configure_logging
 
 logger = logging.getLogger(__name__)
 
