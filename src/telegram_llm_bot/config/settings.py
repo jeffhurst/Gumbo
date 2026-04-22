@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from dataclasses import dataclass
+from typing import Optional
 
 from dotenv import load_dotenv
 
@@ -15,6 +16,7 @@ class Settings:
     log_level: str
     max_history_messages: int
     temperature: float
+    telegram_boot_chat_id: Optional[int]
 
 
 class SettingsError(ValueError):
@@ -58,6 +60,17 @@ def _bounded_float_env(name: str, default: float, min_value: float, max_value: f
     return value
 
 
+def _optional_int_env(name: str) -> Optional[int]:
+    raw_value = os.getenv(name)
+    if raw_value is None:
+        return None
+
+    try:
+        return int(raw_value)
+    except ValueError as exc:
+        raise SettingsError(f"{name} must be an integer") from exc
+
+
 def load_settings() -> Settings:
     load_dotenv()
 
@@ -69,4 +82,5 @@ def load_settings() -> Settings:
         log_level=os.getenv("BOT_LOG_LEVEL", "INFO").upper(),
         max_history_messages=_positive_int_env("MAX_HISTORY_MESSAGES", 12),
         temperature=_bounded_float_env("OLLAMA_TEMPERATURE", 0.4, 0.0, 2.0),
+        telegram_boot_chat_id=_optional_int_env("TELEGRAM_BOOT_CHAT_ID"),
     )
