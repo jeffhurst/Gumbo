@@ -53,7 +53,7 @@ Optional values:
 ## 3) Run
 
 ```bash
-telegram-llm-bot
+gumbo
 ```
 
 or
