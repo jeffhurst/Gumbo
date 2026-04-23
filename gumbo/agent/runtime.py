@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import uuid
 
-from gumbo.agent.services import IntentClassifier, Planner, Reflector
+from gumbo.agent.services import IntentClassifier, Planner, Reflector, Responder
 from gumbo.config import Settings
 from gumbo.graph.workflow import GumboGraph
 from gumbo.llm.ollama import OllamaAdapter
@@ -26,6 +26,7 @@ class GumboRuntime:
             classifier=IntentClassifier(self.llm),
             planner=Planner(self.llm),
             reflector=Reflector(self.llm),
+            responder=Responder(self.llm),
             tools=self.tools,
             short_memory=self.short_memory,
             long_memory=self.long_memory,
