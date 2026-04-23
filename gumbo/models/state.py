@@ -33,6 +33,7 @@ class PlanStep(BaseModel):
     description: str
     status: str = "pending"
     tool_hint: str | None = None
+    tool_args: dict[str, Any] = Field(default_factory=dict)
 
 
 class ToolCallRecord(BaseModel):

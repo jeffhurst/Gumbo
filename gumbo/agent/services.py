@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from gumbo.llm.ollama import OllamaAdapter
@@ -37,11 +38,33 @@ class Planner:
             pass
         return text.strip().split("\n")[0][:200]
 
-    async def plan(self, goal: str) -> list[PlanStep]:
+    async def plan(self, goal: str, user_input: str | None = None) -> list[PlanStep]:
+        text = (user_input or goal).strip()
+        lowered = text.lower()
+        if any(w in lowered for w in ["save", "write", "create"]) and "file" in lowered:
+            content_match = re.search(r'"([^"]+)"|\'([^\']+)\'', text)
+            content = next((g for g in (content_match.group(1), content_match.group(2)) if g), "hello world") if content_match else "hello world"
+            path_match = re.search(r"\b([\w./-]+\.[A-Za-z0-9]+)\b", text)
+            path = path_match.group(1) if path_match else "test.txt"
+            return [
+                PlanStep(id="s1", description="Understand requirements and constraints"),
+                PlanStep(
+                    id="s2",
+                    description="Write requested content to target file",
+                    tool_hint="file_write",
+                    tool_args={"path": path, "content": content, "mode": "overwrite"},
+                ),
+                PlanStep(
+                    id="s3",
+                    description="Verify saved file content",
+                    tool_hint="file_read",
+                    tool_args={"path": path},
+                ),
+            ]
         # Deterministic default plan scaffold. Future: replace with strict-JSON LLM planner.
         return [
             PlanStep(id="s1", description="Understand requirements and constraints"),
-            PlanStep(id="s2", description="Choose and execute next best tool/action", tool_hint="shell"),
+            PlanStep(id="s2", description="Choose and execute next best tool/action"),
             PlanStep(id="s3", description="Validate outcome and summarize deliverable"),
         ]
 

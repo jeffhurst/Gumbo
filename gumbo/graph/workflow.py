@@ -76,7 +76,7 @@ class GumboGraph:
         return "finalize"
 
     async def plan(self, state: AgentState) -> AgentState:
-        state.plan = await self.planner.plan(state.goal)
+        state.plan = await self.planner.plan(state.goal, state.normalized_input)
         self.tracer.log("plan", {"count": len(state.plan)})
         return state
 
@@ -84,8 +84,19 @@ class GumboGraph:
         if state.current_step_index >= len(state.plan):
             return state
         step = state.plan[state.current_step_index]
-        tool_name = step.tool_hint or "shell"
-        args = {"command": f"echo Executing: {step.description}"} if tool_name == "shell" else {"query": step.description}
+        if not step.tool_hint:
+            output = {"ok": True, "note": "No tool required for this planning step"}
+            state.recent_tool_calls.append(
+                ToolCallRecord(tool_name="noop", input={}, output=output, success=True),
+            )
+            state.tool_outputs.append(str(output)[:1000])
+            self.tracer.log("execute", {"step": step.description, "tool": "noop", "ok": True})
+            return state
+
+        tool_name = step.tool_hint
+        args = step.tool_args or (
+            {"command": f"echo Executing: {step.description}"} if tool_name == "shell" else {"query": step.description}
+        )
         output = await self.tools.run(tool_name, args)
         state.recent_tool_calls.append(ToolCallRecord(tool_name=tool_name, input=args, output=output, success=bool(output.get("ok"))))
         state.tool_outputs.append(str(output)[:1000])
