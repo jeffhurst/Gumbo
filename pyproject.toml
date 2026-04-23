@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gumbo-agent"
+version = "0.1.0"
+description = "Gumbo: production-minded autonomous/semi-autonomous agent framework"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+  "langgraph>=0.2.34",
+  "langchain-core>=0.3.7",
+  "httpx>=0.27.0",
+  "pydantic>=2.8.0",
+  "pydantic-settings>=2.4.0",
+  "typer>=0.12.3",
+  "rich>=13.8.0",
+  "python-telegram-bot>=21.4",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.3.2",
+  "pytest-asyncio>=0.23.8",
+]
+
+[project.scripts]
+gumbo = "gumbo.main:app"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+asyncio_mode = "auto"
+
+[tool.setuptools.packages.find]
+include = ["gumbo*"]
