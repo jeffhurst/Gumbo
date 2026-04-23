@@ -4,7 +4,7 @@ from typing import Literal
 
 from langgraph.graph import END, START, StateGraph
 
-from gumbo.agent.services import IntentClassifier, Planner, Reflector
+from gumbo.agent.services import IntentClassifier, Planner, Reflector, Responder
 from gumbo.logging.traces import TraceLogger
 from gumbo.memory.manager import LongTermMemory, ShortTermMemory
 from gumbo.models.state import AgentState, ExecutionStatus, ToolCallRecord
@@ -17,6 +17,7 @@ class GumboGraph:
         classifier: IntentClassifier,
         planner: Planner,
         reflector: Reflector,
+        responder: Responder,
         tools: ToolRegistry,
         short_memory: ShortTermMemory,
         long_memory: LongTermMemory,
@@ -25,6 +26,7 @@ class GumboGraph:
         self.classifier = classifier
         self.planner = planner
         self.reflector = reflector
+        self.responder = responder
         self.tools = tools
         self.short_memory = short_memory
         self.long_memory = long_memory
@@ -134,9 +136,14 @@ class GumboGraph:
     async def finalize(self, state: AgentState) -> AgentState:
         if not state.final_response:
             if state.intent and not state.intent.needs_plan:
-                state.final_response = f"{state.goal}\n\n(Direct response mode; no tool execution required.)"
+                state.final_response = await self.responder.direct(state.normalized_input)
             else:
-                state.final_response = f"Completed goal: {state.goal}\nSteps completed: {len(state.completed_steps)}/{len(state.plan)}"
+                state.final_response = await self.responder.summarize_execution(
+                    goal=state.goal,
+                    completed_steps=len(state.completed_steps),
+                    total_steps=len(state.plan),
+                    tool_outputs=state.tool_outputs,
+                )
             if state.status == ExecutionStatus.running:
                 state.status = ExecutionStatus.completed
         self.tracer.log("finalize", {"status": state.status.value, "response": state.final_response[:200]})

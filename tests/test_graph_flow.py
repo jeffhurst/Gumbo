@@ -25,5 +25,10 @@ async def test_graph_direct_finalize(tmp_path):
         GUMBO_WORKSPACE_ROOT=str(tmp_path),
     )
     runtime = GumboRuntime(settings)
+    async def fake_generate(prompt: str, system: str | None = None) -> str:
+        return "### Favorite Foods\n- Pizza\n- Sushi"
+
+    runtime.llm.generate = fake_generate
     state = await runtime.handle(user_id="u1", text="Hi")
-    assert "Direct response mode" in state.final_response
+    assert "Favorite Foods" in state.final_response
+    assert state.final_response != state.goal

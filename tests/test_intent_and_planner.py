@@ -20,3 +20,15 @@ async def test_planner_structure():
     steps = await p.plan("Inspect repository and summarize")
     assert len(steps) >= 3
     assert all(step.id for step in steps)
+
+
+@pytest.mark.asyncio
+async def test_planner_goal_uses_llm():
+    p = Planner(OllamaAdapter("http://localhost:11434", "fake"))
+
+    async def fake_generate(prompt: str, system: str | None = None) -> str:
+        return "Create a markdown list of favorite foods."
+
+    p.llm.generate = fake_generate
+    goal = await p.goal("draft me a markdown file of your favorite foods.")
+    assert goal == "Create a markdown list of favorite foods."
