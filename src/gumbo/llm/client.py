@@ -1,4 +1,5 @@
 from __future__ import annotations
+from gumbo.experts import build_user_facing_system_message
 
 from collections.abc import Sequence
 
@@ -22,25 +23,29 @@ class LLMClient:
         self,
         base_url: str,
         model: str,
-        system_prompt: str,
         temperature: float,
         timeout_seconds: float = 60.0,
     ) -> None:
         normalized_base_url = base_url.rstrip("/")
         self._chat_url = f"{normalized_base_url}/api/chat"
         self._model = model
-        self._system_prompt = system_prompt
         self._temperature = temperature
         self._timeout = timeout_seconds
 
     async def generate_reply(self, user_message: str, chat_history: Sequence[dict[str, str]]) -> str:
-        messages = [{"role": "system", "content": self._system_prompt}, *chat_history]
-        messages.append({"role": "user", "content": user_message})
+
+        system_message = build_user_facing_system_message(
+            user_message=user_message,
+            chat_history=chat_history,
+        )
+        messages = [{"role": "system", "content": system_message}] 
+        print(messages)
 
         payload = {
             "model": self._model,
             "messages": messages,
             "stream": False,
+            "think": False,
             "options": {"temperature": self._temperature},
         }
 

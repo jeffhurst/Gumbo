@@ -22,7 +22,6 @@ def run() -> None:
     llm_client = LLMClient(
         base_url=settings.ollama_base_url,
         model=settings.ollama_model,
-        system_prompt=settings.system_prompt,
         temperature=settings.temperature,
     )
     history_store = ChatHistoryStore(max_messages=settings.max_history_messages)
