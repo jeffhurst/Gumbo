@@ -61,10 +61,27 @@ class Planner:
                     tool_args={"path": path},
                 ),
             ]
+        search_keywords = ("search", "websearch", "look up", "weather", "stock", "price", "news")
+        if any(keyword in lowered for keyword in search_keywords):
+            return [
+                PlanStep(id="s1", description="Understand requirements and constraints"),
+                PlanStep(
+                    id="s2",
+                    description="Search trusted sources for the requested facts",
+                    tool_hint="web_search",
+                    tool_args={"query": text},
+                ),
+                PlanStep(id="s3", description="Validate outcome and summarize deliverable"),
+            ]
         # Deterministic default plan scaffold. Future: replace with strict-JSON LLM planner.
         return [
             PlanStep(id="s1", description="Understand requirements and constraints"),
-            PlanStep(id="s2", description="Choose and execute next best tool/action"),
+            PlanStep(
+                id="s2",
+                description="Gather evidence with a web search",
+                tool_hint="web_search",
+                tool_args={"query": text},
+            ),
             PlanStep(id="s3", description="Validate outcome and summarize deliverable"),
         ]
 

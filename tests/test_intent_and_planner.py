@@ -43,3 +43,12 @@ async def test_planner_goal_uses_llm():
     p.llm.generate = fake_generate
     goal = await p.goal("draft me a markdown file of your favorite foods.")
     assert goal == "Create a markdown list of favorite foods."
+
+
+@pytest.mark.asyncio
+async def test_planner_search_queries_assigns_web_search_tool():
+    p = Planner(OllamaAdapter("http://localhost:11434", "fake"))
+    text = "conduct a websearch and report back the weather in new york and the current stock price of sp500"
+    steps = await p.plan(text, text)
+    assert steps[1].tool_hint == "web_search"
+    assert steps[1].tool_args["query"] == text
