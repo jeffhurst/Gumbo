@@ -23,6 +23,17 @@ async def test_planner_structure():
 
 
 @pytest.mark.asyncio
+async def test_planner_file_write_intent_sets_tool_and_args():
+    p = Planner(OllamaAdapter("http://localhost:11434", "fake"))
+    text = 'use file_write to save "hello world" into test.txt'
+    steps = await p.plan(text, text)
+    assert steps[1].tool_hint == "file_write"
+    assert steps[1].tool_args["path"] == "test.txt"
+    assert steps[1].tool_args["content"] == "hello world"
+    assert steps[2].tool_hint == "file_read"
+
+
+@pytest.mark.asyncio
 async def test_planner_goal_uses_llm():
     p = Planner(OllamaAdapter("http://localhost:11434", "fake"))
 
